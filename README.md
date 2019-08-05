@@ -6,11 +6,11 @@ Interface methods that returning data are mapped to various Backendless Data API
 
 The Iterator returned by the implementation lets you access either all objects from the data table or a subset determined by a where clause.</p>
 
-[Whant the examples now](https://github.com/olhadanylova/BackendlessDataCollection#examples)
+[Whant the examples now](https://github.com/olgadanylova/BackendlessDataCollection#examples)
 
 ---
 
-All retrieved objects are saved locally to enable faster access in future iterations.
+All retrieved objects are saved locally to enable faster access in future iterations.\
 The collection is not thread safe.
 
 ---
@@ -20,7 +20,8 @@ The collection is not thread safe.
 
 ## Create collection
 ```
-   var orders: BackendlessDataCollection?
+var orders: BackendlessDataCollection?
+
 1. orders = BackendlessDataCollection(entityType: Order.self)
 2. orders = BackendlessDataCollection(entityType: Order.self, slice: "title = 'phone'")
 ```
