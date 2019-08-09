@@ -117,4 +117,4 @@ while let person = personIterator.next() as? Person {
 }
 ```
 
-[Sample app which demonstrates how to bind UITableView  to the BackendlessDataCollection class for automatic data loading purposes](https://github.com/olgadanylova/BackendlessDataCollectionSample)
+Sample [application](https://github.com/olgadanylova/BackendlessDataCollectionSample) which demonstrates how to bind UITableView  to the BackendlessDataCollection class for automatic data loading purposes
