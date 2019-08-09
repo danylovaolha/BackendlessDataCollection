@@ -1,36 +1,54 @@
-
-import Foundation
-import Backendless
+//
+//  BackendlessDataCollection.swift
+//
+/*
+ * *********************************************************************************************************************
+ *
+ *  BACKENDLESS.COM CONFIDENTIAL
+ *
+ *  ********************************************************************************************************************
+ *
+ *  Copyright 2019 BACKENDLESS.COM. All Rights Reserved.
+ *
+ *  NOTICE: All information contained herein is, and remains the property of Backendless.com and its suppliers,
+ *  if any. The intellectual and technical concepts contained herein are proprietary to Backendless.com and its
+ *  suppliers and may be covered by U.S. and Foreign Patents, patents in process, and are protected by trade secret
+ *  or copyright law. Dissemination of this information or reproduction of this material is strictly forbidden
+ *  unless prior written permission is obtained from Backendless.com.
+ *
+ *  ********************************************************************************************************************
+ */
 
 public protocol Identifiable {
     var objectId: String? { get set }
 }
 
-// ********************************************
 
 enum CollectionErrors {
     static let invalidType = " is not a type of objects contained in this collection."
     static let nullObjectId = "objectId is null."
 }
 
-// ********************************************
 
 @objcMembers public class BackendlessDataCollection: Collection {
     
     public typealias BackendlessDataCollectionType = [Identifiable]
     public typealias Index = BackendlessDataCollectionType.Index
     public typealias Element = BackendlessDataCollectionType.Element
+    public typealias RequestStartedHandler = () -> Void
+    public typealias RequestCompletedHandler = () -> Void
     public typealias BackendlessDataChangedHandler = () -> Void
     public typealias BackendlessFaultHandler = (Fault) -> Void
     
     public var startIndex: Index { return backendlessCollection.startIndex }
     public var endIndex: Index { return backendlessCollection.endIndex }
-    public var errorHandler: BackendlessFaultHandler?
-    public var dataChangedHandler: BackendlessDataChangedHandler?
-
-    public let collectionNotification = Notification.Name("backendlessCollectionPageLoaded")
     
-    public private(set) var slice = ""
+    public var requestStartedHandler: RequestStartedHandler?
+    public var requestCompletedHandler: RequestCompletedHandler?
+    public var dataChangedHandler: BackendlessDataChangedHandler?
+    public var errorHandler: BackendlessFaultHandler?
+    
+    public private(set) var whereClause = ""
     public private(set) var count = 0
     public private(set) var isEmpty: Bool {
         get { return backendlessCollection.isEmpty }
@@ -67,22 +85,22 @@ enum CollectionErrors {
     }
     
     private init() { }
-
+    
     public convenience init(entityType: AnyClass) {
-        self.init(entityType: entityType, slice: "")
+        self.init(entityType: entityType, whereClause: "")
     }
     
-    public convenience init(entityType: AnyClass, slice: String) {
+    public convenience init(entityType: AnyClass, whereClause: String) {
         self.init()
-        
-        dataStore = Backendless.shared.data.of(entityType.self)
-        self.entityType = entityType
-        self.slice = slice
-        self.count = getRealCount()
         
         queryBuilder = DataQueryBuilder()
         queryBuilder.setPageSize(pageSize: 50)
         queryBuilder.setOffset(offset: 0)
+        
+        dataStore = Backendless.shared.data.of(entityType.self)
+        self.entityType = entityType
+        self.whereClause = whereClause
+        self.count = getRealCount()
         
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
@@ -104,6 +122,7 @@ enum CollectionErrors {
     /// Fills up this collection with the values from the Backendless table
     public func populate() {
         guard backendlessCollection.count < count else { return }
+        requestStartedHandler?()
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             while self.queryBuilder.getOffset() < self.count {
@@ -112,12 +131,15 @@ enum CollectionErrors {
             semaphore.signal()
         }
         semaphore.wait()
+        requestCompletedHandler?()
+        dataChangedHandler?()
         return
     }
     
     /// Adds a new element to the Backendless collection
     public func add(newObject: Any) {
         checkObjectType(object: newObject)
+        requestStartedHandler?()
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             self.dataStore.save(entity: newObject, responseHandler: { [weak self] savedObject in
@@ -130,12 +152,11 @@ enum CollectionErrors {
                     self.errorHandler?(Fault(message: CollectionErrors.nullObjectId, faultCode: 0))
                     return
                 }
-                if self.slice.isEmpty {
+                if self.whereClause.isEmpty {
                     self.backendlessCollection.append(savedObject)
                     self.count += 1
                     self.queryBuilder.setOffset(offset: self.queryBuilder.getOffset() + 1)
                     semaphore.signal()
-                    self.dataChangedHandler?()
                 }
                 else {
                     self.queryBuilder.setWhereClause(whereClause: self.getQuery(objectId: objectId))
@@ -143,8 +164,8 @@ enum CollectionErrors {
                         self.dataStore.removeById(objectId: objectId, responseHandler: { removed in
                             semaphore.signal()
                         }, errorHandler: { fault in
-                            semaphore.signal()
                             self.errorHandler?(fault)
+                            semaphore.signal()
                         })
                     }
                     else {
@@ -152,15 +173,16 @@ enum CollectionErrors {
                         self.count += 1
                         self.queryBuilder.setOffset(offset: self.queryBuilder.getOffset() + 1)
                         semaphore.signal()
-                        self.dataChangedHandler?()
                     }
                 }
                 }, errorHandler: { [weak self] fault in
-                    semaphore.signal()
                     self?.errorHandler?(fault)
+                    semaphore.signal()
             })
         }
         semaphore.wait()
+        self.requestCompletedHandler?()
+        self.dataChangedHandler?()
         return
     }
     
@@ -180,6 +202,7 @@ enum CollectionErrors {
     /// Inserts a new element into the Backendless collection at the specified position
     public func insert(newObject: Any, at: Int) {
         checkObjectType(object: newObject)
+        requestStartedHandler?()
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             self.dataStore.save(entity: newObject, responseHandler: { [weak self] savedObject in
@@ -189,15 +212,13 @@ enum CollectionErrors {
                 }
                 guard let savedObject = savedObject as? Identifiable, let objectId = savedObject.objectId else {
                     semaphore.signal()
-                    self.errorHandler?(Fault(message: CollectionErrors.nullObjectId, faultCode: 0))
                     return
                 }
-                if self.slice.isEmpty {
+                if self.whereClause.isEmpty {
                     self.backendlessCollection.insert(savedObject, at: at)
                     self.count += 1
                     self.queryBuilder.setOffset(offset: self.queryBuilder.getOffset() + 1)
                     semaphore.signal()
-                    self.dataChangedHandler?()
                 }
                 else {
                     self.queryBuilder.setWhereClause(whereClause: self.getQuery(objectId: objectId))
@@ -205,8 +226,8 @@ enum CollectionErrors {
                         self.dataStore.removeById(objectId: objectId, responseHandler: { removed in
                             semaphore.signal()
                         }, errorHandler: { fault in
-                            semaphore.signal()
                             self.errorHandler?(fault)
+                            semaphore.signal()
                         })
                     }
                     else {
@@ -214,15 +235,16 @@ enum CollectionErrors {
                         self.count += 1
                         self.queryBuilder.setOffset(offset: self.queryBuilder.getOffset() + 1)
                         semaphore.signal()
-                        self.dataChangedHandler?()
                     }
                 }
                 }, errorHandler: { [weak self] fault in
-                    semaphore.signal()
                     self?.errorHandler?(fault)
+                    semaphore.signal()
             })
         }
         semaphore.wait()
+        self.requestCompletedHandler?()
+        self.dataChangedHandler?()
         return
     }
     
@@ -244,6 +266,7 @@ enum CollectionErrors {
     /// Removes object from the Backendless collection
     public func remove(object: Any) {
         checkObjectTypeAndId(object: object)
+        requestStartedHandler?()
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             self.queryBuilder.setWhereClause(whereClause: self.getQuery(object: object))
@@ -257,14 +280,15 @@ enum CollectionErrors {
                     self.backendlessCollection.removeAll(where: { $0.objectId == objectId })
                     self.count -= 1
                     semaphore.signal()
-                    self.dataChangedHandler?()
                     }, errorHandler: { [weak self] fault in
-                        semaphore.signal()
                         self?.errorHandler?(fault)
+                        semaphore.signal()
                 })
             }
         }
         semaphore.wait()
+        self.requestCompletedHandler?()
+        self.dataChangedHandler?()
         return
     }
     
@@ -277,9 +301,10 @@ enum CollectionErrors {
     
     /// Removes all the elements from the Backendless collection that satisfy the given slice
     public func removeAll() {
+        requestStartedHandler?()
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
-            var whereClause = self.slice
+            var whereClause = self.whereClause
             if whereClause.isEmpty {
                 whereClause = "objectId!=null"
             }
@@ -291,12 +316,13 @@ enum CollectionErrors {
                 self.backendlessCollection.removeAll()
                 self.count = 0
                 semaphore.signal()
-                self.dataChangedHandler?()
                 }, errorHandler: { [weak self] fault in
-                    semaphore.signal()
                     self?.errorHandler?(fault)
+                    semaphore.signal()
             })
         }
+        self.requestCompletedHandler?()
+        self.dataChangedHandler?()
         semaphore.wait()
         return
     }
@@ -310,15 +336,14 @@ enum CollectionErrors {
         }
     }
     
-    // **********************************************
-    
-    // private funcs
+    // private functions
     
     private func getRealCount() -> Int {
         var realCount = 0
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
-            self.dataStore.getObjectCount(responseHandler: { totalObjects in
+            self.queryBuilder.setWhereClause(whereClause: self.whereClause)
+            self.dataStore.getObjectCount(queryBuilder: self.queryBuilder, responseHandler: { totalObjects in
                 realCount = totalObjects
                 semaphore.signal()
             }, errorHandler: { fault in
@@ -361,8 +386,8 @@ enum CollectionErrors {
     
     private func getQuery(objectId: String) -> String {
         var query = "objectId='\(objectId)'"
-        if !slice.isEmpty {
-            query += " and \(slice)"
+        if !whereClause.isEmpty {
+            query += " and \(whereClause)"
         }
         return query
     }
@@ -371,8 +396,8 @@ enum CollectionErrors {
         var query = ""
         if object is Identifiable, let objectId = (object as! Identifiable).objectId {
             query = "objectId='\(objectId)'"
-            if !slice.isEmpty {
-                query += " and \(slice)"
+            if !whereClause.isEmpty {
+                query += " and \(whereClause)"
             }       }
         return query
     }
@@ -380,8 +405,8 @@ enum CollectionErrors {
     private func loadNextPage() {
         let semaphore = DispatchSemaphore(value: 0)
         var offset = queryBuilder.getOffset()
-        if !slice.isEmpty {
-            self.queryBuilder.setWhereClause(whereClause: slice)
+        if !whereClause.isEmpty {
+            self.queryBuilder.setWhereClause(whereClause: whereClause)
         }
         
         dataStore.find(queryBuilder: queryBuilder, responseHandler: { [weak self] foundObjects in
@@ -391,7 +416,6 @@ enum CollectionErrors {
             }
             guard let foundObjects = foundObjects as? [Identifiable] else {
                 semaphore.signal()
-                //self.notifPost()
                 return
             }
             self.backendlessCollection += foundObjects
@@ -401,8 +425,6 @@ enum CollectionErrors {
                 self.queryBuilder.setOffset(offset: offset)
             }
             semaphore.signal()
-            //self.notifPost()
-            
             }, errorHandler: { [weak self] fault in
                 semaphore.signal()
                 self?.errorHandler?(fault)
@@ -427,9 +449,5 @@ enum CollectionErrors {
             return element
         }
         return nil
-    }
-    
-    private func notifPost() {
-        NotificationCenter.default.post(name: collectionNotification, object: nil)
     }
 }
