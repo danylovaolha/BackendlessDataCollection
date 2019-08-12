@@ -1,6 +1,6 @@
 # BackendlessDataCollection
 
-This is an implementation of the iOS/macOS Collection protocol enabling to retrieve and iterate over a collection of objects stored in a Backendless data table.</p>
+This is an implementation of the class than conforms to the iOS/macOS Collection protocol enabling to retrieve and iterate over a collection of objects stored in a Backendless data table.</p>
 
 Interface methods that returning data are mapped to various Backendless Data APIs.</p>
 
