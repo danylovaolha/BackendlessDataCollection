@@ -8,13 +8,8 @@ The Iterator returned by the implementation lets you access either all objects f
 
 [Whant the examples now](https://github.com/olgadanylova/BackendlessDataCollection#examples)
 
----
-
 All retrieved objects are saved locally to enable faster access in future iterations.\
 The collection is not thread safe.
-
----
-
 
 # User Guide
 
