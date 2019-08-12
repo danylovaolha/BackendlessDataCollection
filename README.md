@@ -35,7 +35,7 @@ Create **collection as a slice** of data for table _**Person**_. Will reflect on
 Main features are the same as in point (1).
 - the total size of objects satisfied the _slice_ is retrieved on object creation;
 - you can iterate only through the subset of objects;
-- - all `add`,  `insert` and `remove` operations directly perform calls to Backendless server and would be discarded if the object doesn't match the slice clause;
+- all `add`,  `insert` and `remove` operations directly perform calls to Backendless server and would be discarded if the object doesn't match the slice clause;
 
 ## Properties and special methods
 
