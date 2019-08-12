@@ -24,14 +24,14 @@ var people: BackendlessDataCollection?
 ## Description
 
 #### 1. `BackendlessDataCollection(entityType: Person.self)`
-Create **ordinary collection** for table _**Person**_ which reflect all records from it.
+Create **ordinary collection** for table _**Person**_ which reflects all records from it.
 - the total size of objects (table rows) is retrieved on object creation;
 - you can iterate through the entire collection;
 - every iteration will perform calls to the Backendless server;
 - all `add`,  `insert` and `remove` operations directly perform calls to Backendless server;
 
 #### 2. `BackendlessDataCollection(entityType: Person.self, slice: "age > 20")`
-Create **collection as a slice** of data for table _**Person**_. Will reflect only a subset of data which satisfy argument `slice` (in or case it `title = 'phone'`).\
+Create **collection as a slice** of data for table _**Person**_. Will reflect only a subset of data which satisfy argument `slice` (in or case it `age > 20`).\
 Main features are the same as in point (1).
 - the total size of objects satisfied the _slice_ is retrieved on object creation;
 - you can iterate only through the subset of objects;
