@@ -61,10 +61,12 @@ Always perfrom api calls to Backendless to synchronize local state and remote ta
 
 The handlers below can be used to work with UI components - reloading tableView, showing activity indicator etc.
 
-#### `public var requestStartedHandler: RequestStartedHandler?`
-#### `public var requestCompletedHandler: RequestCompletedHandler?`
-#### `public typealias BackendlessDataChangedHandler = () -> Void`
-#### `public typealias BackendlessFaultHandler = (Fault) -> Void`
+#### ```
+public var requestStartedHandler: RequestStartedHandler?
+public var requestCompletedHandler: RequestCompletedHandler?
+public typealias BackendlessDataChangedHandler = () -> Void
+public typealias BackendlessFaultHandler = (Fault) -> Void
+```
 
 #### `public var requestStartedHandler: RequestStartedHandler?`
 Indicates when the request to server starts.
