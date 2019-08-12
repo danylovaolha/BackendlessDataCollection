@@ -18,7 +18,7 @@ The collection is not thread safe.
 var people: BackendlessDataCollection?
 
 1. people = BackendlessDataCollection(entityType: Person.self)
-2. people = BackendlessDataCollection(entityType: Person.self, slice: "age > 20")
+2. people = BackendlessDataCollection(entityType: Person.self, whereClause: "age > 20")
 ```
 
 ## Description
@@ -30,12 +30,12 @@ Create **ordinary collection** for table _**Person**_ which reflects all records
 - every iteration will perform calls to the Backendless server;
 - all `add`,  `insert` and `remove` operations directly perform calls to Backendless server;
 
-#### 2. `BackendlessDataCollection(entityType: Person.self, slice: "age > 20")`
-Create **collection as a slice** of data for table _**Person**_. Will reflect only a subset of data which satisfy argument `slice` (in or case it `age > 20`).\
+#### 2. `BackendlessDataCollection(entityType: Person.self, whereClause: "age > 20")`
+Create **collection as a slice** of data for table _**Person**_. Will reflect only a subset of data which satisfy argument `whereClause` (in or case it `age > 20`).\
 Main features are the same as in point (1).
-- the total size of objects satisfied the _slice_ is retrieved on object creation;
+- the total size of objects satisfied the _whereClause_ is retrieved on object creation;
 - you can iterate only through the subset of objects;
-- all `add`,  `insert` and `remove` operations directly perform calls to Backendless server and would be discarded if the object doesn't match the slice clause;
+- all `add`,  `insert` and `remove` operations directly perform calls to Backendless server and would be discarded if the object doesn't match the where clause;
 
 ## Properties and special methods
 
@@ -46,7 +46,7 @@ Returns the total number of the Backendless collection elements which reflect th
 Never makes api call to Backendless. Returns **true** if Backendless collection is empty.
 
 #### `whereClause`
-Returns where clause for the current collection or empty string if it was created without slice.
+Returns where clause for the current collection or empty string if it was created without whereClause.
 
 #### `populate()`
 Forcibly populates current collection from the Backendless data table (greedy initialization). Under the hood it just iterate over remote table.
