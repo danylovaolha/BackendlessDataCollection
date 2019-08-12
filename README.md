@@ -27,7 +27,7 @@ var people: BackendlessDataCollection?
 Create **ordinary collection** for table _**Person**_ which reflect all records from it.
 - the total size of objects (table rows) is retrieved on object creation;
 - you can iterate through the entire collection;
-- every iteration will perfrom calls to the Backendless server;
+- every iteration will perform calls to the Backendless server;
 - all `add`,  `insert` and `remove` operations directly perform calls to Backendless server;
 
 #### 2. `BackendlessDataCollection(entityType: Person.self, slice: "age > 20")`
