@@ -45,7 +45,7 @@ Returns the total number of the Backendless collection elements which reflect th
 #### `isEmpty`
 Never makes api call to Backendless. Returns **true** if Backendless collection is empty.
 
-#### `slice`
+#### `whereClause`
 Returns where clause for the current collection or empty string if it was created without slice.
 
 #### `populate()`
