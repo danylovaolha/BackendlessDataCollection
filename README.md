@@ -63,8 +63,8 @@ The handlers below can be used to work with UI components - reloading tableView,
 
 #### 
 ```
-public var requestStartedHandler: RequestStartedHandler?
-public var requestCompletedHandler: RequestCompletedHandler?
+public typealias RequestStartedHandler = () -> Void
+public typealias RequestCompletedHandler = () -> Void
 public typealias BackendlessDataChangedHandler = (EventType) -> Void
 public typealias BackendlessFaultHandler = (Fault) -> Void
 ```
