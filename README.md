@@ -65,7 +65,7 @@ The handlers below can be used to work with UI components - reloading tableView,
 ```
 public var requestStartedHandler: RequestStartedHandler?
 public var requestCompletedHandler: RequestCompletedHandler?
-public typealias BackendlessDataChangedHandler = () -> Void
+public typealias BackendlessDataChangedHandler = (EventType) -> Void
 public typealias BackendlessFaultHandler = (Fault) -> Void
 ```
 
@@ -77,6 +77,35 @@ Indicates when the request to server is completed.
 
 #### `public var dataChangedHandler: BackendlessDataChangedHandler?`
 Handles collection changes, e.g. adding or removing object/objects to/from the Backendless collection. 
+As far as BackendlessDataCollection class works in conjunction with real-time we can handle different types of data changed events - creating, updating and deleting:
+```
+@objc public enum EventType: Int {
+    case dataLoaded
+    case created
+    case updated
+    case deleted
+    case bulkDeleted
+}
+
+```
+
+E.g. if we want to handle adding or removing objects in the people collection we can deal with it this way:
+```
+people.dataChangedHandler = { eventType in
+	if eventType == .created {
+    	print("Object has been created")
+    }
+    else if eventType == .deleted {
+        print("Object has been deleted")
+    }
+}
+```
+If we want to have the same behaviour for different event types (e.g. reloading table with updated data):
+```
+people.dataChangedHandler = { eventType in
+	self.tableView.reloadData()
+}
+```
 
 #### `public var errorHandler: BackendlessFaultHandler?`
 Handles errors that may occur during requests to Backendless.
