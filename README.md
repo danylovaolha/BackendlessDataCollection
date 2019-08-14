@@ -54,15 +54,18 @@ Main features are the same as in point (1).
 ## Handlers
 
 The handlers below can be used to work with UI components - reloading tableView, showing activity indicator etc.
-```
+**```
 public typealias RequestStartedHandler = () -> Void
 public typealias RequestCompletedHandler = () -> Void
 public typealias BackendlessFaultHandler = (Fault) -> Void
 public typealias BackendlessDataChangedHandler = (EventType) -> Void
-```
-`public var requestStartedHandler: RequestStartedHandler?` - indicates when the request to server starts.
+```**
+**`public var requestStartedHandler: RequestStartedHandler?`** - indicates when the request to server starts.
+
 `public var requestCompletedHandler: RequestCompletedHandler?` - indicates when the request to server is completed.
+
 `public var errorHandler: BackendlessFaultHandler?` - handles errors that may occur during requests to Backendless.
+
 `public var dataChangedHandler: BackendlessDataChangedHandler?` - handles collection changes, e.g. adding or removing object/objects to/from the Backendless collection.
 
 As far as BackendlessDataCollection class works in conjunction with real-time we can handle different types of data changed events - creating, updating and deleting:
