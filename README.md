@@ -23,15 +23,15 @@ var people: BackendlessDataCollection?
 
 ## Description
 
-#### 1. `BackendlessDataCollection(entityType: Person.self)`
-Create **ordinary collection** for table _**Person**_ which reflects all records from it.
+#### `BackendlessDataCollection(entityType: Person.self)`
+Create ordinary collection for table _Person_ which reflects all records from it.
 - the total size of objects (table rows) is retrieved on object creation;
 - you can iterate through the entire collection;
 - every iteration will perform calls to the Backendless server;
 - all `add`,  `insert` and `remove` operations directly perform calls to Backendless server;
 
-#### 2. `BackendlessDataCollection(entityType: Person.self, whereClause: "age > 20")`
-Create **collection as a slice** of data for table _**Person**_. Will reflect only a subset of data which satisfy argument `whereClause` (in or case it `age > 20`).\
+#### `BackendlessDataCollection(entityType: Person.self, whereClause: "age > 20")`
+Create collection as a slice of data for table _Person_. Will reflect only a subset of data which satisfy argument `whereClause` (in or case it `age > 20`).\
 Main features are the same as in point (1).
 - the total size of objects satisfied the _whereClause_ is retrieved on object creation;
 - you can iterate only through the subset of objects;
@@ -39,44 +39,27 @@ Main features are the same as in point (1).
 
 ## Properties and special functions
 
-#### `count`
-Returns the total number of the Backendless collection elements which reflect the row size in the underlying table. 
-
-#### `isEmpty`
-Never makes api call to Backendless. Returns **true** if Backendless collection is empty.
-
-#### `whereClause`
-Returns where clause for the current collection or empty string if it was created without whereClause.
-
-#### `populate()`
-Forcibly populates current collection from the Backendless data table (greedy initialization). Under the hood it just iterate over remote table.
-
-#### `isLoaded()`
-Returns **true** if the data was retrieved from Backendless table in a full (after invocation `populate()` function or full iteration).
-
-#### `add()`, `add(contentsOf: )`, `insert()`, `insert(contentsOf: )`, `remove()`, `remove(at: )`, `removeAll()`
-Always perfrom api calls to Backendless to synchronize local state and remote table.
+`count` - returns the total number of the Backendless collection elements which reflect the row size in the underlying table. 
+`isEmpty` - never makes api call to Backendless. Returns _true_ if Backendless collection is empty.
+`whereClause` - returns where clause for the current collection or empty string if it was created without whereClause.
+`populate()` - forcibly populates current collection from the Backendless data table (greedy initialization). Under the hood it just iterate over remote table.
+`isLoaded()` - returns _true_ if the data was retrieved from Backendless table in a full (after invocation `populate()` function or full iteration).
+`add()`, `add(contentsOf: )`, `insert()`, `insert(contentsOf: )`, `remove()`, `remove(at: )`, `removeAll()` - always perfrom api calls to Backendless to synchronize local state and remote table.
 
 ## Handlers
 
 The handlers below can be used to work with UI components - reloading tableView, showing activity indicator etc.
-
-#### 
 ```
 public typealias RequestStartedHandler = () -> Void
 public typealias RequestCompletedHandler = () -> Void
-public typealias BackendlessDataChangedHandler = (EventType) -> Void
 public typealias BackendlessFaultHandler = (Fault) -> Void
+public typealias BackendlessDataChangedHandler = (EventType) -> Void
 ```
+`public var requestStartedHandler: RequestStartedHandler?` - indicates when the request to server starts.
+`public var requestCompletedHandler: RequestCompletedHandler?` - indicates when the request to server is completed.
+`public var errorHandler: BackendlessFaultHandler?` - handles errors that may occur during requests to Backendless.
+`public var dataChangedHandler: BackendlessDataChangedHandler?` - handles collection changes, e.g. adding or removing object/objects to/from the Backendless collection.
 
-#### `public var requestStartedHandler: RequestStartedHandler?`
-Indicates when the request to server starts.
-
-#### `public var requestCompletedHandler: RequestCompletedHandler?`
-Indicates when the request to server is completed.
-
-#### `public var dataChangedHandler: BackendlessDataChangedHandler?`
-Handles collection changes, e.g. adding or removing object/objects to/from the Backendless collection. 
 As far as BackendlessDataCollection class works in conjunction with real-time we can handle different types of data changed events - creating, updating and deleting:
 ```
 @objc public enum EventType: Int {
@@ -86,10 +69,9 @@ As far as BackendlessDataCollection class works in conjunction with real-time we
     case deleted
     case bulkDeleted
 }
-
 ```
-`.dataLoaded` is used in the `populate()` function to handle all data is loaded in one step.
-`.created`, `.updated`, `.deleted`, `.bulkDeleted` are used in the `add`,  `insert` and `remove` functions to handle changes in the Backendless table in real-time.
+`.dataLoaded` - is used in the `populate()` function to handle all data is loaded in one step.
+`.created`, `.updated`, `.deleted`, `.bulkDeleted` - are used in the `add`,  `insert` and `remove` functions to handle changes in the Backendless table in real-time.
 
 E.g. if we want to handle adding or removing objects in the people collection we can deal with it this way:
 ```
@@ -102,15 +84,13 @@ people.dataChangedHandler = { eventType in
     }
 }
 ```
+
 If we want to have the same behaviour for different event types (e.g. reloading table with updated data):
 ```
 people.dataChangedHandler = { eventType in
 	self.tableView.reloadData()
 }
 ```
-
-#### `public var errorHandler: BackendlessFaultHandler?`
-Handles errors that may occur during requests to Backendless.
 
 ## Examples
 
