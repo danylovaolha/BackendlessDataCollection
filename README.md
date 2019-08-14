@@ -60,13 +60,13 @@ public typealias RequestCompletedHandler = () -> Void
 public typealias BackendlessFaultHandler = (Fault) -> Void
 public typealias BackendlessDataChangedHandler = (EventType) -> Void
 ```
-`public var requestStartedHandler: RequestStartedHandler?` - indicates when the request to server starts.
+**`public var requestStartedHandler: RequestStartedHandler?`** - indicates when the request to server starts.
 
-`public var requestCompletedHandler: RequestCompletedHandler?` - indicates when the request to server is completed.
+**`public var requestCompletedHandler: RequestCompletedHandler?`** - indicates when the request to server is completed.
 
-`public var errorHandler: BackendlessFaultHandler?` - handles errors that may occur during requests to Backendless.
+**`public var errorHandler: BackendlessFaultHandler?`** - handles errors that may occur during requests to Backendless.
 
-`public var dataChangedHandler: BackendlessDataChangedHandler?` - handles collection changes, e.g. adding or removing object/objects to/from the Backendless collection.
+**`public var dataChangedHandler: BackendlessDataChangedHandler?`** - handles collection changes, e.g. adding or removing object/objects to/from the Backendless collection.
 
 As far as BackendlessDataCollection class works in conjunction with real-time we can handle different types of data changed events - creating, updating and deleting:
 ```
@@ -78,8 +78,9 @@ As far as BackendlessDataCollection class works in conjunction with real-time we
     case bulkDeleted
 }
 ```
-`.dataLoaded` - is used in the `populate()` function to handle all data is loaded in one step.
-`.created`, `.updated`, `.deleted`, `.bulkDeleted` - are used in the `add`,  `insert` and `remove` functions to handle changes in the Backendless table in real-time.
+**`.dataLoaded`** - is used in the `populate()` function to handle all data is loaded in one step.
+
+**`.created`**, **`.updated`**, **`.deleted`**, **`.bulkDeleted`** - are used in the `add`, `insert` and `remove` functions to handle changes in the Backendless table in real-time.
 
 E.g. if we want to handle adding or removing objects in the people collection we can deal with it this way:
 ```
