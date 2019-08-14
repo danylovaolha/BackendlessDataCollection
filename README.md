@@ -2,7 +2,7 @@
 
 This is an implementation of the class than conforms to the iOS/macOS Collection protocol enabling to retrieve and iterate over a collection of objects stored in a Backendless data table.</p>
 
-Methods that returns data are mapped to various Backendless Data APIs.</p>
+Functions that returns data are mapped to various Backendless Data APIs.</p>
 
 The Iterator returned by the implementation lets you access either all objects from the data table or a subset determined by a where clause.</p>
 
@@ -37,7 +37,7 @@ Main features are the same as in point (1).
 - you can iterate only through the subset of objects;
 - all `add`,  `insert` and `remove` operations directly perform calls to Backendless server and would be discarded if the object doesn't match the where clause;
 
-## Properties and special methods
+## Properties and special functions
 
 #### `count`
 Returns the total number of the Backendless collection elements which reflect the row size in the underlying table. 
@@ -52,7 +52,7 @@ Returns where clause for the current collection or empty string if it was create
 Forcibly populates current collection from the Backendless data table (greedy initialization). Under the hood it just iterate over remote table.
 
 #### `isLoaded()`
-Returns **true** if the data was retrieved from Backendless table in a full (after invocation `populate()` method or full iteration).
+Returns **true** if the data was retrieved from Backendless table in a full (after invocation `populate()` function or full iteration).
 
 #### `add()`, `add(contentsOf: )`, `insert()`, `insert(contentsOf: )`, `remove()`, `remove(at: )`, `removeAll()`
 Always perfrom api calls to Backendless to synchronize local state and remote table.
@@ -88,6 +88,11 @@ As far as BackendlessDataCollection class works in conjunction with real-time we
 }
 
 ```
+##### `.dataLoaded`
+is used in the `populate()` function to handle all data is loaded in one step.
+
+##### `.created`, `.updated`, `.deleted`, `.bulkDeleted`
+are used in the `add`,  `insert` and `remove` functions to handle changes in the Backendless table in real-time.
 
 E.g. if we want to handle adding or removing objects in the people collection we can deal with it this way:
 ```
