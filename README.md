@@ -39,12 +39,17 @@ Main features are the same as in point (1).
 
 ## Properties and special functions
 
-`count` - returns the total number of the Backendless collection elements which reflect the row size in the underlying table. 
-`isEmpty` - never makes api call to Backendless. Returns _true_ if Backendless collection is empty.
-`whereClause` - returns where clause for the current collection or empty string if it was created without whereClause.
-`populate()` - forcibly populates current collection from the Backendless data table (greedy initialization). Under the hood it just iterate over remote table.
-`isLoaded()` - returns _true_ if the data was retrieved from Backendless table in a full (after invocation `populate()` function or full iteration).
-`add()`, `add(contentsOf: )`, `insert()`, `insert(contentsOf: )`, `remove()`, `remove(at: )`, `removeAll()` - always perfrom api calls to Backendless to synchronize local state and remote table.
+**`count`** - returns the total number of the Backendless collection elements which reflect the row size in the underlying table.
+
+**`isEmpty`** - never makes api call to Backendless. Returns _true_ if Backendless collection is empty.
+
+**`whereClause`** - returns where clause for the current collection or empty string if it was created without whereClause.
+
+**`populate()`** - forcibly populates current collection from the Backendless data table (greedy initialization). Under the hood it just iterate over remote table.
+
+**`isLoaded()`** - returns _true_ if the data was retrieved from Backendless table in a full (after invocation `populate()` function or full iteration).
+
+**`add()`, `add(contentsOf: )`, `insert()`, `insert(contentsOf: )`, `remove()`, `remove(at: )`, `removeAll()`** - always perfrom api calls to Backendless to synchronize local state and remote table.
 
 ## Handlers
 
@@ -94,14 +99,14 @@ people.dataChangedHandler = { eventType in
 
 ## Examples
 
-#### for-in
+**for-in**
 ```
 for person in people {
     print((person as! Person).name ?? "")
 }
 ```
 
-#### for-in with premature break
+**for-in with premature break**
 ```
 for person in people {
     print((person as! Person).name ?? "")
@@ -111,14 +116,14 @@ for person in people {
 }
 ```
 
-#### for-each
+**for-each**
 ```
 people.forEach({ person in
     print((person as! Person).name ?? "")
 })
 ```
 
-#### iterator
+**iterator**
 ```
 let personIterator = people.makeIterator()
 while let person = personIterator.next() as? Person {
