@@ -88,11 +88,8 @@ As far as BackendlessDataCollection class works in conjunction with real-time we
 }
 
 ```
-##### `.dataLoaded`
-is used in the `populate()` function to handle all data is loaded in one step.
-
-##### `.created`, `.updated`, `.deleted`, `.bulkDeleted`
-are used in the `add`,  `insert` and `remove` functions to handle changes in the Backendless table in real-time.
+`.dataLoaded` is used in the `populate()` function to handle all data is loaded in one step.
+`.created`, `.updated`, `.deleted`, `.bulkDeleted` are used in the `add`,  `insert` and `remove` functions to handle changes in the Backendless table in real-time.
 
 E.g. if we want to handle adding or removing objects in the people collection we can deal with it this way:
 ```
