@@ -18,7 +18,10 @@ The collection is not thread safe.
 var people: BackendlessDataCollection?
 
 1. people = BackendlessDataCollection(entityType: Person.self)
-2. people = BackendlessDataCollection(entityType: Person.self, whereClause: "age > 20")
+
+2. let queryBuilder = DataQueryBuilder()
+   queryBuilder.setWhereClause(whereClause: "age > 20")
+   people = BackendlessDataCollection(entityType: Person.self, queryBuilder: queryBuilder)
 ```
 
 ## Description
@@ -30,7 +33,7 @@ Create ordinary collection for table _Person_ which reflects all records from it
 - every iteration will perform calls to the Backendless server;
 - all `add`,  `insert` and `remove` operations directly perform calls to Backendless server;
 
-#### `BackendlessDataCollection(entityType: Person.self, whereClause: "age > 20")`
+#### `BackendlessDataCollection(entityType: Person.self, queryBuilder: queryBuilder)`
 Create collection as a slice of data for table _Person_. Will reflect only a subset of data which satisfy argument `whereClause` (in or case it `age > 20`).\
 Main features are the same as in point (1).
 - the total size of objects satisfied the _whereClause_ is retrieved on object creation;
@@ -50,6 +53,10 @@ Main features are the same as in point (1).
 **`isLoaded()`** - returns _true_ if the data was retrieved from Backendless table in a full (after invocation `populate()` function or full iteration).
 
 **`add()`, `add(contentsOf: )`, `insert()`, `insert(contentsOf: )`, `remove()`, `remove(at: )`, `removeAll()`** - always perfrom api calls to Backendless to synchronize local state and remote table.
+
+**`sort(by:)`**  - sorts the collection in place, using the given predicate as the comparison between elements.
+
+**`makeIterator()`** - returns an iterator over the elements of the collection
 
 ## Handlers
 
@@ -97,7 +104,7 @@ people.dataChangedHandler = { eventType in
 If we want to have the same behaviour for different event types (e.g. reloading table with updated data):
 ```
 people.dataChangedHandler = { eventType in
-	self.tableView.reloadData()
+    self.tableView.reloadData()
 }
 ```
 
