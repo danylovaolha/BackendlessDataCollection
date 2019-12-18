@@ -38,15 +38,15 @@
     public typealias BackendlessDataCollectionType = [Identifiable]
     public typealias Index = BackendlessDataCollectionType.Index
     public typealias Element = BackendlessDataCollectionType.Element    
-    //public typealias RequestStartedHandler = () -> Void
-    //public typealias RequestCompletedHandler = () -> Void
+    public typealias RequestStartedHandler = () -> Void
+    public typealias RequestCompletedHandler = () -> Void
     public typealias BackendlessDataChangedHandler = (EventType) -> Void
     public typealias BackendlessFaultHandler = (Fault) -> Void
     
     public var startIndex: Index { return backendlessCollection.startIndex }
     public var endIndex: Index { return backendlessCollection.endIndex }
-    //public var requestStartedHandler: RequestStartedHandler?
-    //public var requestCompletedHandler: RequestCompletedHandler?
+    public var requestStartedHandler: RequestStartedHandler?
+    public var requestCompletedHandler: RequestCompletedHandler?
     public var dataChangedHandler: BackendlessDataChangedHandler?
     public var errorHandler: BackendlessFaultHandler?
     
@@ -93,22 +93,20 @@
     private init() { }
     
     public convenience init(entityType: AnyClass) {
-        self.init(entityType: entityType, whereClause: "")
+        let dataQueryBuilder = DataQueryBuilder()
+        dataQueryBuilder.setPageSize(pageSize: 100)
+        dataQueryBuilder.setOffset(offset: 0)
+        self.init(entityType: entityType, queryBuilder: dataQueryBuilder)
     }
     
-    public convenience init(entityType: AnyClass, whereClause: String) {
+    public convenience init(entityType: AnyClass, queryBuilder: DataQueryBuilder) {
         self.init()
-        
-        queryBuilder = DataQueryBuilder()
-        queryBuilder.setPageSize(pageSize: 50)
-        queryBuilder.setOffset(offset: 0)
-        
+        self.queryBuilder = queryBuilder
         dataStore = Backendless.shared.data.of(entityType.self)
         self.entityType = entityType
         self.whereClause = whereClause
         self.count = getRealCount()
-        addRtListeners()
-        
+        addRtListeners()        
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             for _ in 0 ..< 3 {
@@ -119,6 +117,30 @@
         semaphore.wait()
         return
     }
+    
+    //    public convenience init(entityType: AnyClass, whereClause: String) {
+    //        self.init()
+    //
+    //        queryBuilder = DataQueryBuilder()
+    //        queryBuilder.setPageSize(pageSize: 100)
+    //        queryBuilder.setOffset(offset: 0)
+    //
+    //        dataStore = Backendless.shared.data.of(entityType.self)
+    //        self.entityType = entityType
+    //        self.whereClause = whereClause
+    //        self.count = getRealCount()
+    //        addRtListeners()
+    //
+    //        let semaphore = DispatchSemaphore(value: 0)
+    //        DispatchQueue.global().async {
+    //            for _ in 0 ..< 3 {
+    //                self.loadNextPage()
+    //            }
+    //            semaphore.signal()
+    //        }
+    //        semaphore.wait()
+    //        return
+    //    }
     
     deinit {
         dataStore.rt.removeAllListeners()
@@ -133,7 +155,7 @@
     // Fills up this collection with the values from the Backendless table
     public func populate() {
         guard backendlessCollection.count < count else { return }
-        //requestStartedHandler?()
+        requestStartedHandler?()
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             while self.queryBuilder.getOffset() < self.count {
@@ -142,15 +164,15 @@
             semaphore.signal()
         }
         semaphore.wait()
+        self.requestCompletedHandler?()
         dataChangedHandler?(.dataLoaded)
-        //requestCompletedHandler?()
         return
     }
     
     // Adds a new element to the Backendless collection
     public func add(newObject: Any) {
         checkObjectType(object: newObject)
-        //requestStartedHandler?()
+        requestStartedHandler?()
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             self.dataStore.save(entity: newObject, responseHandler: { [weak self] savedObject in
@@ -211,7 +233,7 @@
     // Inserts a new element into the Backendless collection at the specified position
     public func insert(newObject: Any, at: Int) {
         checkObjectType(object: newObject)
-        //requestStartedHandler?()
+        requestStartedHandler?()
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             self.dataStore.save(entity: newObject, responseHandler: { [weak self] savedObject in
@@ -273,7 +295,7 @@
     // Removes object from the Backendless collection
     public func remove(object: Any) {
         checkObjectTypeAndId(object: object)
-        //requestStartedHandler?()
+        requestStartedHandler?()
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             self.queryBuilder.setWhereClause(whereClause: self.getQuery(object: object))
@@ -307,7 +329,7 @@
     
     // Removes all the elements from the Backendless collection that satisfy the given slice
     public func removeAll() {
-        //requestStartedHandler?()
+        requestStartedHandler?()
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             var whereClause = self.whereClause
@@ -350,60 +372,89 @@
         let eventHandler = dataStore.rt
         if whereClause.isEmpty {
             let _ = eventHandler?.addCreateListener(responseHandler: { [weak self] createdObject in
-                print("Created")
+                
+                // ⚠️ create object in collection
+                
+                self?.requestCompletedHandler?()
                 self?.dataChangedHandler?(.created)
-                //self?.requestCompletedHandler?()
                 }, errorHandler: { [weak self] fault in
+                    self?.requestCompletedHandler?()
                     self?.errorHandler?(fault)
             })
             let _ = eventHandler?.addUpdateListener(responseHandler: { [weak self] updatedObject in
-                print("Updated")
+                
+                // ⚠️ update object in collection
+                
+                self?.requestCompletedHandler?()
                 self?.dataChangedHandler?(.updated)
-                //self?.requestCompletedHandler?()
                 }, errorHandler: { [weak self] fault in
+                    self?.requestCompletedHandler?()
                     self?.errorHandler?(fault)
-                    //self?.requestCompletedHandler?()
             })
             let _ = eventHandler?.addDeleteListener(responseHandler: { [weak self] deletedObject in
-                print("Deleted")
+                
+                // ⚠️ delete object in collection if exist
+                
+                self?.requestCompletedHandler?()
                 self?.dataChangedHandler?(.deleted)
-                //self?.requestCompletedHandler?()
                 }, errorHandler: { [weak self] fault in
+                    self?.requestCompletedHandler?()
                     self?.errorHandler?(fault)
-                    //self?.requestCompletedHandler?()
             })
             let _ = eventHandler?.addBulkDeleteListener(responseHandler: { [weak self] bulkEvent in
+                
+                // ⚠️ remove everything from collection if present
+                
+                self?.requestCompletedHandler?()
                 self?.dataChangedHandler?(.bulkDeleted)
-                //self?.requestCompletedHandler?()
                 }, errorHandler: { [weak self] fault in
+                    self?.requestCompletedHandler?()
                     self?.errorHandler?(fault)
             })
         }
         else {
             let _ = eventHandler?.addCreateListener(whereClause: whereClause, responseHandler: { [weak self] createdObject in
+                
+                // ⚠️ create object in collection
+                
+                self?.requestCompletedHandler?()
                 self?.dataChangedHandler?(.created)
-                //self?.requestCompletedHandler?()
                 }, errorHandler: { [weak self] fault in
+                    self?.requestCompletedHandler?()
                     self?.errorHandler?(fault)
             })
             let _ = eventHandler?.addUpdateListener(whereClause: whereClause, responseHandler: { [weak self] updatedObject in
+                
+                // ⚠️ update object in collection
+                
+                self?.requestCompletedHandler?()
                 self?.dataChangedHandler?(.updated)
-                //self?.requestCompletedHandler?()
                 }, errorHandler: { [weak self] fault in
+                    self?.requestCompletedHandler?()
                     self?.errorHandler?(fault)
             })
             let _ = eventHandler?.addDeleteListener(whereClause: whereClause, responseHandler: { [weak self] deletedObject in
+                
+                // ⚠️ delete object in collection if exist
+                
+                self?.requestCompletedHandler?()
                 self?.dataChangedHandler?(.deleted)
-                //self?.requestCompletedHandler?()
                 }, errorHandler: { [weak self] fault in
+                    self?.requestCompletedHandler?()
                     self?.errorHandler?(fault)
             })
             let _ = eventHandler?.addBulkDeleteListener(whereClause: whereClause, responseHandler: { [weak self] bulkEvent in
+                
+                // ⚠️ remove everything from collection if present
+                
+                self?.requestCompletedHandler?()
                 self?.dataChangedHandler?(.bulkDeleted)
-                //self?.requestCompletedHandler?()
                 }, errorHandler: { [weak self] fault in
+                    self?.requestCompletedHandler?()
                     self?.errorHandler?(fault)
             })
+            
+            // ⚠️ TODO?: sync backendlessCollection with remote in realtime?
         }
     }
     
@@ -488,7 +539,7 @@
             }
             self.backendlessCollection += foundObjects
             offset += foundObjects.count
-
+            
             if self.queryBuilder.getOffset() < self.count {
                 self.queryBuilder.setOffset(offset: offset)
             }
