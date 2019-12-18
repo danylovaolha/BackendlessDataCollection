@@ -104,7 +104,7 @@
         self.queryBuilder = queryBuilder
         dataStore = Backendless.shared.data.of(entityType.self)
         self.entityType = entityType
-        self.whereClause = whereClause
+        self.whereClause = self.queryBuilder.getWhereClause() ?? ""
         self.count = getRealCount()
         addRtListeners()        
         let semaphore = DispatchSemaphore(value: 0)
