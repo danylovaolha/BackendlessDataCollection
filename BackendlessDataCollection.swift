@@ -26,30 +26,14 @@ import SwiftSDK
     var objectId: String? { get set }
 }
 
-
-@objc public enum EventType: Int {
-    case dataLoaded
-    case created
-    case updated
-    case deleted
-    case bulkDeleted
-}
-
-
 @objcMembers public class BackendlessDataCollection: Collection {
     
     public typealias BackendlessDataCollectionType = [Identifiable]
     public typealias Index = BackendlessDataCollectionType.Index
     public typealias Element = BackendlessDataCollectionType.Element
-    public typealias RequestStartedHandler = () -> Void
-    public typealias RequestCompletedHandler = () -> Void
-    public typealias BackendlessFaultHandler = (Fault) -> Void
     
     public var startIndex: Index { return backendlessCollection.startIndex }
     public var endIndex: Index { return backendlessCollection.endIndex }
-    public var requestStartedHandler: RequestStartedHandler?
-    public var requestCompletedHandler: RequestCompletedHandler?
-    public var errorHandler: BackendlessFaultHandler?
     
     public private(set) var whereClause = ""
     public private(set) var count: Int {
@@ -209,7 +193,6 @@ import SwiftSDK
                 semaphore.signal()
             }, errorHandler: { fault in
                 semaphore.signal()
-                self.errorHandler?(fault)
             })
         }
         semaphore.wait()
@@ -251,9 +234,8 @@ import SwiftSDK
                 self.queryBuilder.setOffset(offset: offset)
             }
             semaphore.signal()
-            }, errorHandler: { [weak self] fault in
+            }, errorHandler: { fault in
                 semaphore.signal()
-                self?.errorHandler?(fault)
         })
         semaphore.wait()
     }
