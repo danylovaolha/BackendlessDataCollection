@@ -19,9 +19,6 @@
  *  ********************************************************************************************************************
  */
 
-import Foundation
-import SwiftSDK
-
 @objc public protocol Identifiable {
     var objectId: String? { get set }
 }
@@ -37,7 +34,12 @@ import SwiftSDK
     
     public private(set) var whereClause = ""
     public private(set) var count: Int {
-        get { return backendlessCollection.count }
+        get {
+            if backendlessCollection.count > 0 {
+                return backendlessCollection.count
+            }
+            return self.totalCount
+        }
         set { }
     }
     public private(set) var isEmpty: Bool {
@@ -49,6 +51,7 @@ import SwiftSDK
     private var entityType: AnyClass!
     private var dataStore: DataStoreFactory!
     private var queryBuilder: DataQueryBuilder!
+    private var totalCount: Int = 0
     
     private enum CollectionErrors {
         static let invalidType = " is not a type of objects contained in this collection."
@@ -59,7 +62,7 @@ import SwiftSDK
         return i + 1
     }
     
-    public subscript (position: Int) -> Identifiable {        
+    public subscript (position: Int) -> Identifiable {
         if position >= backendlessCollection.count {
             fatalError("Index out of range")
         }
@@ -93,12 +96,12 @@ import SwiftSDK
         self.dataStore = Backendless.shared.data.of(entityType.self)
         self.entityType = entityType
         self.whereClause = self.queryBuilder.getWhereClause() ?? ""
-        self.count = getRealCount()
+        getRealCount()
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
-            var pagesCount = 1
-            if self.count > queryBuilder.getPageSize() {
-                pagesCount = 2
+            var pagesCount = (self.totalCount / queryBuilder.getPageSize())
+            if (self.totalCount % queryBuilder.getPageSize()) > 0 {
+                pagesCount += 1
             }
             for _ in 0 ..< pagesCount {
                 self.loadNextPage()
@@ -183,20 +186,19 @@ import SwiftSDK
     
     // private functions
     
-    private func getRealCount() -> Int {
-        var realCount = 0
+    private func getRealCount() {
         let semaphore = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             self.queryBuilder.setWhereClause(whereClause: self.whereClause)
             self.dataStore.getObjectCount(queryBuilder: self.queryBuilder, responseHandler: { totalObjects in
-                realCount = totalObjects
+                self.totalCount = totalObjects
                 semaphore.signal()
             }, errorHandler: { fault in
                 semaphore.signal()
             })
         }
         semaphore.wait()
-        return realCount
+        return
     }
     
     private func checkObjectType(object: Any) {
